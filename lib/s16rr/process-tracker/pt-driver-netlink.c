@@ -54,7 +54,7 @@ process_tracker_t * pt_new (int kq)
     pt->pids = List_new ();
 
     pt->sock = socket (PF_NETLINK, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
-                   NETLINK_CONNECTOR);
+                       NETLINK_CONNECTOR);
 
     addr.nl_family = AF_NETLINK;
     addr.nl_pid = getpid ();
@@ -91,8 +91,8 @@ process_tracker_t * pt_new (int kq)
     i = kevent (pt->kq, &ke, 1, NULL, 0, NULL);
 
     if (i == -1)
-        fprintf (stderr, "Error: failed to watch NetLink socket %d: %s\n", pt->sock,
-                 strerror (errno));
+        fprintf (stderr, "Error: failed to watch NetLink socket %d: %s\n",
+                 pt->sock, strerror (errno));
     return pt;
 }
 
@@ -145,8 +145,8 @@ pt_info_t * pt_investigate_kevent (process_tracker_t * pt, struct kevent * ke)
     struct msghdr msghdr;
     struct sockaddr_nl addr;
     struct iovec iov[1];
-    char buf[NLMSG_SPACE(NLMSG_LENGTH(sizeof(struct cn_msg) + 
-				       sizeof(struct proc_event)))];
+    char buf[NLMSG_SPACE (
+        NLMSG_LENGTH (sizeof (struct cn_msg) + sizeof (struct proc_event)))];
     ssize_t len;
 
     if (ke->filter != EVFILT_READ || ke->ident != pt->sock)
@@ -187,25 +187,25 @@ pt_info_t * pt_investigate_kevent (process_tracker_t * pt, struct kevent * ke)
             info.pid = ev->event_data.fork.child_tgid;
             info.ppid = ev->event_data.fork.parent_tgid;
             info.flags = 0;
-	    if (pid_relevant(pt, info.pid, info.ppid))
-	    {
-		pid_list_add (pt->pids, pid_new_p (info.pid));
-		goto reply;
-	    }
+            if (pid_relevant (pt, info.pid, info.ppid))
+            {
+                pid_list_add (pt->pids, pid_new_p (info.pid));
+                goto reply;
+            }
             break;
         case PROC_EVENT_EXIT:
             info.event = PT_EXIT;
             info.pid = ev->event_data.exit.process_tgid;
             info.ppid = 0;
             info.flags = ev->event_data.exit.exit_code;
-	    if (pid_relevant(pt, info.pid, info.ppid))
-	    {
+            if (pid_relevant (pt, info.pid, info.ppid))
+            {
                 pt_disregard_pid (pt->pids, info.pid);
                 goto reply;
-	    }
+            }
             break;
-	default:
-	    return 0;
+        default:
+            return 0;
         }
     }
     return 0;
