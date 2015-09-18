@@ -174,7 +174,7 @@ void s16mem_free (void * ap)
     // acquire pointer to block header
     block = ((mem_header_t *)ap) - 1;
 
-    if (ap < (void *)&pool || ap > (void *)(&pool + POOL_SIZE))
+    if (ap < (void *)&pool || ap > ((void *)&pool + POOL_SIZE))
     {
         /* We managed to use system malloc in this case.
          * That, or someone doesn't know what they are doing. */
