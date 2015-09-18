@@ -97,11 +97,8 @@ process_tracker_t * pt_new (int kq)
 
 int pt_watch_pid (process_tracker_t * pt, pid_t pid)
 {
-    int i;
-
     pid_list_add (pt->pids, pid_new_p (pid));
-
-    return i == -1 ? 1 : 0;
+    return 0;
 }
 
 void pt_disregard_pid (process_tracker_t * pt, pid_t pid)
