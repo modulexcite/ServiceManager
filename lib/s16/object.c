@@ -46,7 +46,7 @@ svc_t * s16_svc_new ()
 svc_id_t s16_inst_new (svc_t * svc, const char * name)
 {
     char * fmri = s16mem_alloc (
-        strlen (svc_object_get_property_string (svc, "S16.FMRI")) + 8);
+        strlen (svc_object_get_property_string (svc, "S16.FMRI")) + 9);
     svc_instance_t * new_inst = s16mem_calloc (1, sizeof (svc_instance_t));
 
     new_inst->name = s16mem_strdup (name);

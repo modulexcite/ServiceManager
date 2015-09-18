@@ -1,7 +1,8 @@
 /* This is a process-tracker driver using Linux's NetLink Proc connector.
  * The Proc connector allows us to be informed of process forks and exits.
  * Thanks to http://netsplit.com/the-proc-connector-and-socket-filters for
- * demystifying this. */
+ * demystifying this.
+ * Be aware: this requires root. */
 
 #include <string.h>
 #include <errno.h>
@@ -13,9 +14,9 @@
 #include <linux/connector.h>
 #include <linux/netlink.h>
 #include <linux/cn_proc.h>
+#include <unistd.h>
 
 #include "list.h"
-
 #include "s16rr.h"
 
 ListGenForNameType (pid, pid_t);
@@ -39,6 +40,7 @@ static pid_t * pid_new_p (pid_t val)
 
 process_tracker_t * pt_new (int kq)
 {
+    int i;
     struct sockaddr_nl addr;
     process_tracker_t * pt = s16mem_alloc (sizeof (process_tracker_t));
     struct iovec iov[3];
@@ -46,19 +48,19 @@ process_tracker_t * pt_new (int kq)
     struct nlmsghdr * nlmsghdr = nlmsghdrbuf;
     struct cn_msg cn_msg;
     enum proc_cn_mcast_op op;
+    struct kevent ke;
 
     pt->kq = kq;
     pt->pids = List_new ();
 
-    sock = socket (PF_NETLINK, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+    pt->sock = socket (PF_NETLINK, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
                    NETLINK_CONNECTOR);
-    pt->sock = sock;
 
     addr.nl_family = AF_NETLINK;
     addr.nl_pid = getpid ();
     addr.nl_groups = CN_IDX_PROC;
 
-    bind (sock, (struct sockaddr *)&addr, sizeof addr);
+    bind (pt->sock, (struct sockaddr *)&addr, sizeof addr);
 
     nlmsghdr->nlmsg_len = NLMSG_LENGTH (sizeof cn_msg + sizeof op);
     nlmsghdr->nlmsg_type = NLMSG_DONE;
@@ -83,15 +85,14 @@ process_tracker_t * pt_new (int kq)
     iov[2].iov_base = &op;
     iov[2].iov_len = sizeof op;
 
-    writev (sock, iov, 3);
+    writev (pt->sock, iov, 3);
 
-    EV_SET (&ke, sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
+    EV_SET (&ke, pt->sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
     i = kevent (pt->kq, &ke, 1, NULL, 0, NULL);
 
     if (i == -1)
-        fprintf (stderr, "Error: failed to watch NetLink socket %d: %s\n", sock,
+        fprintf (stderr, "Error: failed to watch NetLink socket %d: %s\n", pt->sock,
                  strerror (errno));
-
     return pt;
 }
 
@@ -119,6 +120,23 @@ void pt_disregard_pid (process_tracker_t * pt, pid_t pid)
     return;
 }
 
+int pid_relevant (process_tracker_t * pt, pid_t pid, pid_t ppid)
+{
+    pid_list_iterator it;
+
+    for (it = pid_list_begin (pt->pids); it != NULL;
+         pid_list_iterator_next (&it))
+    {
+        if (*it->val == pid || *it->val == ppid)
+        {
+            return 1;
+            break;
+        }
+    }
+
+    return 0;
+}
+
 pt_info_t * pt_investigate_kevent (process_tracker_t * pt, struct kevent * ke)
 {
     pt_info_t * result;
@@ -127,7 +145,8 @@ pt_info_t * pt_investigate_kevent (process_tracker_t * pt, struct kevent * ke)
     struct msghdr msghdr;
     struct sockaddr_nl addr;
     struct iovec iov[1];
-    char buf[PAGE_SIZE];
+    char buf[NLMSG_SPACE(NLMSG_LENGTH(sizeof(struct cn_msg) + 
+				       sizeof(struct proc_event)))];
     ssize_t len;
 
     if (ke->filter != EVFILT_READ || ke->ident != pt->sock)
@@ -144,7 +163,7 @@ pt_info_t * pt_investigate_kevent (process_tracker_t * pt, struct kevent * ke)
     iov[0].iov_base = buf;
     iov[0].iov_len = sizeof buf;
 
-    len = recvmsg (sock, &msghdr, 0);
+    len = recvmsg (pt->sock, &msghdr, 0);
 
     if (addr.nl_pid != 0)
         return 0;
@@ -155,7 +174,7 @@ pt_info_t * pt_investigate_kevent (process_tracker_t * pt, struct kevent * ke)
         struct cn_msg * cn_msg;
         struct proc_event * ev;
 
-        cn_msg = cn_msg = NLMSG_DATA (nlmsghdr);
+        cn_msg = NLMSG_DATA (nlmsghdr);
         if ((cn_msg->id.idx != CN_IDX_PROC) || (cn_msg->id.val != CN_VAL_PROC))
             continue;
 
@@ -168,20 +187,28 @@ pt_info_t * pt_investigate_kevent (process_tracker_t * pt, struct kevent * ke)
             info.pid = ev->event_data.fork.child_tgid;
             info.ppid = ev->event_data.fork.parent_tgid;
             info.flags = 0;
-            pid_list_add (pt->pids, pid_new_p (info.pid));
-            goto reply;
+	    if (pid_relevant(pt, info.pid, info.ppid))
+	    {
+		pid_list_add (pt->pids, pid_new_p (info.pid));
+		goto reply;
+	    }
             break;
         case PROC_EVENT_EXIT:
             info.event = PT_EXIT;
             info.pid = ev->event_data.exit.process_tgid;
             info.ppid = 0;
-            info.flags = 0;
-            pt_disregard_pid (info.pid);
-            goto reply;
+            info.flags = ev->event_data.exit.exit_code;
+	    if (pid_relevant(pt, info.pid, info.ppid))
+	    {
+                pt_disregard_pid (pt->pids, info.pid);
+                goto reply;
+	    }
             break;
+	default:
+	    return 0;
         }
     }
-    else return 0;
+    return 0;
 
 reply:
     result = s16mem_alloc (sizeof (pt_info_t));

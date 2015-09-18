@@ -170,6 +170,7 @@ void unit_enter_maintenance (unit_t * unit)
 
 void unit_purge_and_target (unit_t * unit)
 {
+	List_print(unit->pids);
     if (List_count (unit->pids))
         unit_enter_stopterm (unit);
     else

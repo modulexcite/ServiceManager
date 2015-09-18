@@ -29,5 +29,5 @@ if "$(KBUILD_TARGET)" == "linux"
     TEMPLATE_CXX_CFLAGS += $(shell $(PKGCONF) libkqueue libtirpc --cflags) 
     TEMPLATE_CXX_DEFS += _XOPEN_SOURCE=700 _SVID_SOURCE _BSD_SOURCE PT_POSIX
     TEMPLATE_CXX_CXXFLAGS += $(shell $(PKGCONF) libkqueue libtirpc --cflags)
-    PT_DRIVER = posix
+    PT_DRIVER = netlink
 endif

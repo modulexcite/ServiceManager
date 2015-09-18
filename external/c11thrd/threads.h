@@ -17,7 +17,6 @@ Main project site: https://github.com/jtsiomb/c11threads
 
 #undef _GNU_SOURCE
 #define _GNU_SOURCE
-#define __USE_UNIX98
 
 #include <time.h>
 #include <errno.h>

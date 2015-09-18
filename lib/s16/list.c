@@ -174,7 +174,7 @@ void List_print (List_t * n)
         mtx_lock (&n->Lock);
         while (t != NULL)
         {
-            printf ("%p\n", t->data);
+            printf ("%d\n", t->data);
             t = t->Link;
         }
         mtx_unlock (&n->Lock);
