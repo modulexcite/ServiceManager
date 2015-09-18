@@ -1,3 +1,5 @@
+
+#include <libgen.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,11 +9,16 @@
 #include "manager.h"
 #include "unit.h"
 
+void unit_dirwatch_event (void * data, unsigned int id);
 void unit_timer_event (void * data, long id);
 void unit_enter_state (unit_t * unit, unit_state_e state);
 
 #define UnitTimerReg()                                                         \
     unit->timer_id = timer_add (unit->timeout_secs, unit, unit_timer_event);
+
+#define UnitPIDFileWatchReg()                                                  \
+    unit->dirwatch_id = dirwatch_add ((const char *)dirname (unit->pidfile),   \
+                                      unit, unit_dirwatch_event);
 
 #define DbgEnteringState(x)                                                    \
     fprintf (stderr, "[%s] Unit entering state %s\n", unit->name, #x);
@@ -138,6 +145,9 @@ unit_t * unit_new (svc_t * svc, svc_instance_t * inst)
         svc_object_get_property_string (svc, "Method.Poststart");
     unitnew->method[M_STOP] =
         svc_object_get_property_string (svc, "Method.Stop");
+
+    unitnew->method[M_STOP] =
+        svc_object_get_property_string (svc, "Unit.PIDFile");
 
     unitnew->timeout_secs = 12;
 
@@ -276,20 +286,24 @@ void unit_enter_poststart (unit_t * unit)
 void unit_enter_start (unit_t * unit)
 {
     /* deal with forking case later */
-    if (unit->type == T_EXEC)
-    {
-        DbgEnteredState (Start);
 
-        unit->state = S_START;
-        unit->main_pid = unit_fork_and_register (unit, unit->method[M_START]);
-        if (!unit->main_pid)
-        {
-            unit_enter_maintenance (unit);
-            return;
-        }
+    DbgEnteredState (Start);
+
+    unit->state = S_START;
+    unit->main_pid = unit_fork_and_register (unit, unit->method[M_START]);
+    if (!unit->main_pid)
+    {
+        unit_enter_maintenance (unit);
+        return;
+    }
+    if (unit->type == T_EXEC || unit->type == T_ONESHOT)
         /* in a T_EXEC service, we consider it online as soon as the process
          * specified in the start method is running. */
         unit_enter_poststart (unit);
+    else
+    {
+        UnitTimerReg ();
+        UnitPIDFileWatchReg ();
     }
 }
 
@@ -338,6 +352,8 @@ void unit_ctrl (unit_t * unit, msg_type_e ctrl)
         break;
     }
 }
+
+void unit_dirwatch_event (void * data, unsigned int id) {}
 
 void unit_timer_event (void * data, long id)
 {

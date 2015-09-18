@@ -9,22 +9,22 @@ ListGenForNameType (dirwatch, DirWatch);
 
 typedef struct DirWatch
 {
-    int id;
+    unsigned id;
     void * userData;
     void (*cb) (void *, long);
 } DirWatch;
 
 /* Find a directory watcher by its ID.
  * Returns 0 if no such directory watcher is found. */
-DirWatch * dirwatch_find (int id);
+DirWatch * dirwatch_find (unsigned id);
 
 /* Deletes a directory watcher by its file descriptor. */
-void dirwatch_del (int id);
+void dirwatch_del (unsigned id);
 
 /* Installs a directory watcher for a path.
  * Returns the file descriptor, which acts as the identifier for the
  * dirwatch. */
-int dirwatch_add (const char * path, void * userData,
-                  void (*cb) (void *, long));
+unsigned dirwatch_add (const char * path, void * userData,
+                       void (*cb) (void *, unsigned));
 
 #endif

@@ -4,7 +4,7 @@
 #include "manager.h"
 #include "dirwatch.h"
 
-DirWatch * dirwatch_find (int id)
+DirWatch * dirwatch_find (unsigned id)
 {
     for (dirwatch_list_iterator it = dirwatch_list_begin (Manager.dirwatches);
          it != NULL; dirwatch_list_iterator_next (&it))
@@ -17,7 +17,7 @@ DirWatch * dirwatch_find (int id)
     return 0;
 }
 
-void dirwatch_del (int id)
+void dirwatch_del (unsigned id)
 {
     DirWatch * toDel;
     struct kevent ev;
@@ -29,7 +29,8 @@ void dirwatch_del (int id)
     }
 }
 
-int dirwatch_add (const char * path, void * userData, void (*cb) (void *, long))
+unsigned dirwatch_add (const char * path, void * userData,
+                       void (*cb) (void *, unsigned))
 {
     return 0;
 }

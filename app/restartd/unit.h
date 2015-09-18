@@ -51,7 +51,7 @@ typedef struct unit_s
 {
     svc_t * svc;
     svc_instance_t * inst;
-    const char * name;
+    const char *name, *pidfile;
     const char * method[_M_MAX];
     unit_type_e type;
     unit_restart_e rtype;
@@ -59,12 +59,11 @@ typedef struct unit_s
     int timeout_secs;
 
     /* state-related */
-    unit_state_e state;
-    unit_state_e target; /* target state for s_stop_term/s_stop_kill */
+    unit_state_e state, target; /* target state for stopstates */
     pid_list pids;
     pid_t main_pid, secondary_pid;
 
-    unsigned int timer_id;
+    unsigned int dirwatch_id, timer_id;
 } unit_t;
 
 unit_t * unit_find_by_pid (unit_list box, pid_t pid);
