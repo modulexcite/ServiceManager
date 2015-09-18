@@ -113,6 +113,7 @@ int main ()
     Manager.units = List_new ();
     Manager.msgs = List_new ();
     Manager.timers = List_new ();
+    Manager.dirwatches = List_new ();
     Manager.clnt_cfg = s16db_context_create ();
 
     if (mtx_init (&Manager.lock, mtx_plain | mtx_recursive) != thrd_success)

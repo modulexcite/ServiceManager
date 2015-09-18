@@ -368,7 +368,24 @@ void unit_ctrl (unit_t * unit, msg_type_e ctrl)
 
 void unit_dirwatch_event (void * data, struct kevent ev)
 {
+    unit_t * unit = data;
+    pid_t candidate;
+
     printf ("Dirwatch event\n");
+    sleep (1);
+    if ((candidate = read_pid_file (unit->pidfile)))
+    {
+        /* we really need to debounce this and delay it a second or two,
+         * actually, as this tends to be raised *before* the new PID is
+         * added to our list. */
+        printf ("Pid read: %d\n", candidate);
+        timer_del (unit->timer_id);
+        dirwatch_del (unit->dirwatch_id);
+        unit->timer_id = 0;
+        unit->dirwatch_id = 0;
+        unit->main_pid = candidate;
+        unit_enter_poststart (unit);
+    }
 }
 
 void unit_timer_event (void * data, long id)

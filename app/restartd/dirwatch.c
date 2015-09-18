@@ -46,8 +46,8 @@ unsigned dirwatch_add (const char * path, void * userData,
 
     printf ("Path: %s\n", path);
 
-    EV_SET (&ev, ident, EVFILT_VNODE, EV_ADD | EV_ENABLE,
-            NOTE_WRITE | NOTE_EXTEND, 0, 0);
+    EV_SET (&ev, ident, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
+            NOTE_EXTEND | NOTE_WRITE, 0, 0);
 
     i = kevent (Manager.kq, &ev, 1, NULL, 0, NULL);
 

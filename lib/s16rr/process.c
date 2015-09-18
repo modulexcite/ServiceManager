@@ -134,15 +134,11 @@ pid_t read_pid_file (const char * path)
     pid_t InPID;
 
     if (!PIDFileDescriptor)
-    {
         return 0; // Zero for failure.
-    }
 
     for (int TChar;
          (TChar = getc (PIDFileDescriptor)) != EOF && Inc < (200 - 1); ++Inc)
-    {
         *(unsigned char *)&PIDBuf[Inc] = (unsigned char)TChar;
-    }
 
     PIDBuf[Inc] = '\0';
     fclose (PIDFileDescriptor);
