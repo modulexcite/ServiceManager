@@ -234,6 +234,7 @@ int main ()
             }
             break;
         }
+
         case EVFILT_SIGNAL:
             printf ("Signal received: %d. Additional data: %d\n", ev.ident,
                     ev.data);
@@ -241,14 +242,25 @@ int main ()
                 while (waitpid ((pid_t) (-1), 0, WNOHANG) > 0)
                     ;
             break;
+
         case EVFILT_TIMER:
         {
             Timer * timer;
             printf ("Timer\n");
             if ((timer = timer_find (ev.ident)))
                 timer->cb (timer->userData, ev.ident);
-            printf ("%p\n", timer);
+            break;
         }
+
+        case EVFILT_VNODE:
+        {
+            printf ("Dirwatch %d %d\n", ev.ident, ev.flags);
+            DirWatch * dirwatch;
+            if ((dirwatch = dirwatch_find (ev.ident)))
+                dirwatch->cb (dirwatch->userData, ev);
+            break;
+        }
+
         default:;
         }
         mtx_unlock (&Manager.lock);

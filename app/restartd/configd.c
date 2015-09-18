@@ -20,7 +20,8 @@ void install_configd_svc ()
     svc_object_set_property_string (new_svc, "S16.Name", new_svc->name);
     svc_object_set_property_string (new_svc, "S16.FMRI", "svc:/s16/configd");
 
-    svc_object_set_property_string (new_svc, "Unit.Strategy", "exec");
+    svc_object_set_property_string (new_svc, "Unit.Strategy", "forking");
+    svc_object_set_property_string (new_svc, "Unit.PIDFile", "/opt/sleep.pid");
     svc_object_set_property_string (
         new_svc, "Unit.Description",
         "The S16 Service Configuration Repository.");
@@ -28,8 +29,9 @@ void install_configd_svc ()
     /* how shall we identify the location of s16 binaries? */
     svc_object_set_property_string (new_svc, "Method.Prestart",
                                     "/bin/echo PreStart");
-    svc_object_set_property_string (new_svc, "Method.Start",
-                                    "/usr/sbin/daemon /bin/sleep 7");
+    svc_object_set_property_string (
+        new_svc, "Method.Start",
+        "/usr/sbin/daemon -p /opt/sleep.pid /bin/sleep 7");
     svc_object_set_property_string (new_svc, "Method.Poststart",
                                     "/bin/echo Execed poststart");
     /* "out/freebsd.amd64/debug/stage/bin/s16.repositoryd");*/

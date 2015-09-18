@@ -9,7 +9,7 @@
 #include "manager.h"
 #include "unit.h"
 
-void unit_dirwatch_event (void * data, unsigned int id);
+void unit_dirwatch_event (void * data, struct kevent ev);
 void unit_timer_event (void * data, long id);
 void unit_enter_state (unit_t * unit, unit_state_e state);
 
@@ -125,7 +125,7 @@ unit_t * unit_new (svc_t * svc, svc_instance_t * inst)
 
     if (CompareType ("exec"))
         unitnew->type = T_EXEC;
-    else if (CompareType ("forks"))
+    else if (CompareType ("forking"))
         unitnew->type = T_FORKS;
     else if (CompareType ("oneshot"))
         unitnew->type = T_ONESHOT;
@@ -146,8 +146,7 @@ unit_t * unit_new (svc_t * svc, svc_instance_t * inst)
     unitnew->method[M_STOP] =
         svc_object_get_property_string (svc, "Method.Stop");
 
-    unitnew->method[M_STOP] =
-        svc_object_get_property_string (svc, "Unit.PIDFile");
+    unitnew->pidfile = svc_object_get_property_string (svc, "Unit.PIDFile");
 
     unitnew->timeout_secs = 12;
 
@@ -289,6 +288,21 @@ void unit_enter_start (unit_t * unit)
 
     DbgEnteredState (Start);
 
+    if (unit->type == T_FORKS)
+    {
+        if (unit->pidfile)
+        {
+            UnitPIDFileWatchReg ();
+            if (!unit->dirwatch_id)
+            {
+                printf ("Erecting dirwatch for unit failed\n");
+                timer_del (unit->timer_id);
+                unit->target = S_MAINTENANCE;
+                unit_purge_and_target (unit);
+            }
+        }
+    }
+
     unit->state = S_START;
     unit->main_pid = unit_fork_and_register (unit, unit->method[M_START]);
     if (!unit->main_pid)
@@ -303,7 +317,6 @@ void unit_enter_start (unit_t * unit)
     else
     {
         UnitTimerReg ();
-        UnitPIDFileWatchReg ();
     }
 }
 
@@ -353,7 +366,10 @@ void unit_ctrl (unit_t * unit, msg_type_e ctrl)
     }
 }
 
-void unit_dirwatch_event (void * data, unsigned int id) {}
+void unit_dirwatch_event (void * data, struct kevent ev)
+{
+    printf ("Dirwatch event\n");
+}
 
 void unit_timer_event (void * data, long id)
 {

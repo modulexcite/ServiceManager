@@ -11,7 +11,7 @@ typedef struct DirWatch
 {
     unsigned id;
     void * userData;
-    void (*cb) (void *, long);
+    void (*cb) (void *, struct kevent ev);
 } DirWatch;
 
 /* Find a directory watcher by its ID.
@@ -25,6 +25,6 @@ void dirwatch_del (unsigned id);
  * Returns the file descriptor, which acts as the identifier for the
  * dirwatch. */
 unsigned dirwatch_add (const char * path, void * userData,
-                       void (*cb) (void *, unsigned));
+                       void (*cb) (void *, struct kevent ev));
 
 #endif
