@@ -1,9 +1,9 @@
-
 #include <libgen.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <unistd.h>
 
 #include "s16.h"
 #include "manager.h"
@@ -127,6 +127,8 @@ unit_t * unit_new (svc_t * svc, svc_instance_t * inst)
         unitnew->type = T_EXEC;
     else if (CompareType ("forking"))
         unitnew->type = T_FORKS;
+    else if (CompareType ("group"))
+        unitnew->type = T_GROUP;
     else if (CompareType ("oneshot"))
         unitnew->type = T_ONESHOT;
     else
@@ -310,9 +312,11 @@ void unit_enter_start (unit_t * unit)
         unit_enter_maintenance (unit);
         return;
     }
-    if (unit->type == T_EXEC || unit->type == T_ONESHOT)
+    if (unit->type == T_EXEC || unit->type == T_ONESHOT ||
+        unit->type == T_GROUP)
         /* in a T_EXEC service, we consider it online as soon as the process
-         * specified in the start method is running. */
+         * specified in the start method is running.
+         * the same applies for a 'group' type unit. */
         unit_enter_poststart (unit);
     else
     {
@@ -466,21 +470,28 @@ void unit_ptevent (unit_t * unit, pt_info_t * info)
                 unit_purge_and_target (unit);
                 break;
             case S_POSTSTART:
-                /* we won't bother purging any PIDs left over by poststart. */
-                if (unit->rtype == R_YES)
-                    unit->target = S_PRESTART;
-                else
-                    unit->target = S_OFFLINE;
+                /* we're in poststart, and the main PID of our service has quit.
+                 */
+                if (unit->type != T_GROUP || !List_count (unit->pids))
+                {
+                    if (unit->rtype == R_YES)
+                        unit->target = S_PRESTART;
+                    else
+                        unit->target = S_OFFLINE;
 
-                unit_purge_and_target (unit);
+                    unit_enter_stop (unit);
+                }
                 break;
             case S_ONLINE:
-                if (unit->rtype == R_YES)
-                    unit->target = S_PRESTART;
-                else
-                    unit->target = S_OFFLINE;
-                unit_enter_stop (unit);
-                break;
+                if (unit->type != T_GROUP || !List_count (unit->pids))
+                {
+                    if (unit->rtype == R_YES)
+                        unit->target = S_PRESTART;
+                    else
+                        unit->target = S_OFFLINE;
+                    unit_enter_stop (unit);
+                    break;
+                }
             case S_STOP:
                 unit_purge_and_target (unit);
                 break;
@@ -496,6 +507,19 @@ void unit_ptevent (unit_t * unit, pt_info_t * info)
                 timer_del (unit->timer_id);
             unit->secondary_pid = 0;
             unit_enter_online (unit);
+        }
+    }
+    else if (info->event == PT_EXIT && unit->type == T_GROUP &&
+             (unit->state == S_ONLINE || unit->state == S_POSTSTART))
+    {
+        if (!List_count (unit->pids))
+        {
+            if (unit->rtype == R_YES)
+                unit->target = S_PRESTART;
+            else
+                unit->target = S_OFFLINE;
+
+            unit_enter_stop (unit);
         }
     }
 

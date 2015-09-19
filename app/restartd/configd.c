@@ -20,8 +20,9 @@ void install_configd_svc ()
     svc_object_set_property_string (new_svc, "S16.Name", new_svc->name);
     svc_object_set_property_string (new_svc, "S16.FMRI", "svc:/s16/configd");
 
-    svc_object_set_property_string (new_svc, "Unit.Strategy", "forking");
-    svc_object_set_property_string (new_svc, "Unit.PIDFile", "/opt/sleep.pid");
+    svc_object_set_property_string (new_svc, "Unit.Strategy", "group");
+    // svc_object_set_property_string (new_svc, "Unit.PIDFile",
+    // "/opt/sleep.pid");
     svc_object_set_property_string (
         new_svc, "Unit.Description",
         "The S16 Service Configuration Repository.");

@@ -15,6 +15,7 @@ typedef enum unit_type_e
 {
     T_EXEC,
     T_FORKS,
+    T_GROUP,
     T_ONESHOT,
 } unit_type_e;
 
