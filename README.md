@@ -64,6 +64,7 @@ A few frequently asked questions about S16:
 > On what platforms does S16 run?
 
  * FreeBSD
+ * DragonFly BSD
  * GNU+Linux
  * muslibc+BusyBox+Linux
 
