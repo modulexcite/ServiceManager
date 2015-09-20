@@ -25,11 +25,29 @@ void unit_enter_state (unit_t * unit, unit_state_e state);
 #define DbgEnteredState(x)                                                     \
     fprintf (stderr, "[%s] Unit arrived at state %s\n", unit->name, #x);
 
+int unit_pid_tracked (unit_t * unit, pid_t pid)
+{
+    for (pid_list_iterator it = pid_list_begin (unit->pids); it != NULL;
+         pid_list_iterator_next (&it))
+    {
+        if (*it->val == pid)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void unit_register_pid (unit_t * unit, pid_t pid)
 {
-    pid_t * rpid = s16mem_alloc (sizeof (pid_t));
-    *rpid = pid;
-    pid_list_add (unit->pids, rpid);
+    pid_t * rpid;
+
+    if (!unit_pid_tracked (unit, pid))
+    {
+        rpid = s16mem_alloc (sizeof (pid_t));
+        *rpid = pid;
+        pid_list_add (unit->pids, rpid);
+    }
 }
 
 void unit_deregister_pid (unit_t * unit, pid_t pid)
