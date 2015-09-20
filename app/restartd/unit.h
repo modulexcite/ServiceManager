@@ -74,5 +74,6 @@ unit_t * unit_new (svc_t * svc, svc_instance_t * inst);
 typedef enum msg_type_e msg_type_e;
 void unit_ctrl (unit_t * unit, msg_type_e ctrl);
 void unit_ptevent (unit_t * unit, pt_info_t * info);
+void unit_loop (unit_t * unit);
 
 #endif

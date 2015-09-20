@@ -543,8 +543,35 @@ void unit_ptevent (unit_t * unit, pt_info_t * info)
             unit_enter_online (unit);
         }
     }
-    else if (info->event == PT_EXIT && unit->type == T_GROUP &&
-             (unit->state == S_ONLINE || unit->state == S_POSTSTART))
+}
+
+void unit_loop (unit_t * unit)
+{
+    switch (unit->state)
+    {
+    case S_STOP:
+    case S_STOP_TERM:
+    case S_STOP_KILL:
+        if (!List_count (unit->pids))
+        {
+            timer_del (unit->timer_id_pidfile);
+            timer_del (unit->timer_id);
+            unit->main_pid = 0;
+            unit->timer_id = 0;
+            unit->secondary_pid = 0;
+            unit->timer_id_pidfile = 0;
+            fprintf (stderr, "All PIDs purged\n");
+            /* having purged all the PIDs we need to, we are free to enter the
+            * targeted next state. */
+            unit_enter_state (unit, unit->target);
+            return;
+        }
+
+        break;
+    }
+
+    if (unit->type == T_GROUP &&
+        (unit->state == S_ONLINE || unit->state == S_POSTSTART))
     {
         if (!List_count (unit->pids))
         {
@@ -555,24 +582,5 @@ void unit_ptevent (unit_t * unit, pt_info_t * info)
 
             unit_enter_stop (unit);
         }
-    }
-
-    switch (unit->state)
-    {
-    case S_STOP:
-    case S_STOP_TERM:
-    case S_STOP_KILL:
-        if (!List_count (unit->pids))
-        {
-            timer_del (unit->timer_id);
-            unit->main_pid = 0;
-            unit->timer_id = 0;
-            fprintf (stderr, "All PIDs purged\n");
-            /* having purged all the PIDs we need to, we are free to enter the
-             * targeted next state. */
-            unit_enter_state (unit, unit->target);
-        }
-
-        break;
     }
 }

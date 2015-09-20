@@ -195,6 +195,12 @@ int main ()
         tmout.tv_sec = 3;
         info = 0;
 
+        for (unit_list_iterator it = unit_list_begin (Manager.units); it != 0;
+             unit_list_iterator_next (&it))
+        {
+            unit_loop (it->val);
+        }
+
         if ((info = pt_investigate_kevent (Manager.ptrack, &ev)))
         {
             unit_t * unit = unit_find_by_pid (Manager.units, info->pid);
