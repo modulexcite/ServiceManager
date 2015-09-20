@@ -43,9 +43,6 @@ typedef struct manager_s
     mtx_t lock; /* this is not really necessary, as the list is already
                    threadsafe, but it may help synchronise kevent dispatch. */
     msg_list msgs;
-#ifdef __linux
-    int npipe[2];
-#endif
 
     unit_list units;
 
