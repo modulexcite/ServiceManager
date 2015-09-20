@@ -64,7 +64,7 @@ typedef struct unit_s
     pid_list pids;
     pid_t main_pid, secondary_pid;
 
-    unsigned int dirwatch_id, timer_id;
+    unsigned int dirwatch_id, timer_id, timer_id_pidfile;
 } unit_t;
 
 unit_t * unit_find_by_pid (unit_list box, pid_t pid);

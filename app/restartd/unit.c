@@ -370,24 +370,38 @@ void unit_ctrl (unit_t * unit, msg_type_e ctrl)
     }
 }
 
+void unit_timer_event_readpidfile (void * data, long id);
+
 void unit_dirwatch_event (void * data, struct kevent ev)
 {
     unit_t * unit = data;
     pid_t candidate;
 
     printf ("Dirwatch event\n");
-    sleep (1);
-    if ((candidate = read_pid_file (unit->pidfile)))
+    if (!unit->timer_id_pidfile)
     {
-        /* we really need to debounce this and delay it a second or two,
-         * actually, as this tends to be raised *before* the new PID is
-         * added to our list. */
-        printf ("Pid read: %d\n", candidate);
-        timer_del (unit->timer_id);
+        /* Set a timer to read the PID file a second from now;
+         * this is necessary as a debouncing mechanism. */
+        unit->timer_id_pidfile =
+            timer_add (1, unit, unit_timer_event_readpidfile);
+    }
+}
+
+void unit_timer_event_readpidfile (void * data, long id)
+{
+    pid_t candidate;
+    unit_t * unit = data;
+
+    if (unit->state == S_START)
+    {
+        if (!(candidate = read_pid_file (unit->pidfile)))
+            return;
+
         dirwatch_del (unit->dirwatch_id);
+        timer_del (unit->timer_id);
+        unit->main_pid = candidate;
         unit->timer_id = 0;
         unit->dirwatch_id = 0;
-        unit->main_pid = candidate;
         unit_enter_poststart (unit);
     }
 }

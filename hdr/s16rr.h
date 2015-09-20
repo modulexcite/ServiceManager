@@ -87,6 +87,10 @@ int exit_was_abnormal (int wstat);
  * i.e. it does literally nothing functional. */
 void discard_signal (int no);
 
+/* Reads a PID file.
+ * Returns PID for success and 0 for fail. */
+pid_t read_pid_file (const char * path);
+
 #ifdef __cplusplus
 }
 #endif
