@@ -8,4 +8,12 @@ include $(PATH_CURRENT)/rpc/Makefile.kmk
 include $(PATH_CURRENT)/lib/Makefile.kmk
 include $(PATH_CURRENT)/app/Makefile.kmk
 
+S16-HEADERS_INST = include/s16/
+S16-HEADERS_IFFLAGS = -m 644
+S16-HEADERS_SOURCES = hdr/list.h hdr/s16.h hdr/s16db.h hdr/s16rr.h \
+	hdr/config-subscriber_rpc.h hdr/repositoryd_rpc.h \
+	hdr/s16_rpc.h hdr/restartd_rpc.h
+
+INSTALLS += S16-HEADERS
+
 include $(FILE_KBUILD_SUB_FOOTER)
