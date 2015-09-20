@@ -392,6 +392,8 @@ void unit_timer_event_readpidfile (void * data, long id)
     pid_t candidate;
     unit_t * unit = data;
 
+    unit->timer_id_pidfile = 0;
+
     if (unit->state == S_START)
     {
         if (!(candidate = read_pid_file (unit->pidfile)))
