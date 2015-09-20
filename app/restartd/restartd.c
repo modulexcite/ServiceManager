@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,10 +43,11 @@ void note_send (enum msg_type_e type, svc_id_t id, svc_id_t i_id, void * misc)
     msg->i_id = i_id;
     msg->misc = misc;
 
-    /* In order to awaken the event loop, we may use EVFILT_USER, which
-     * is a user-controlled kevent. We enable and trigger it here, after
-     * we first secure the lock. After we have done our work, we can then
-     * add to the message queue our message. */
+/* In order to awaken the event loop, we may use EVFILT_USER, which
+ * is a user-controlled kevent. We enable and trigger it here, after
+ * we first secure the lock. After we have done our work, we can then
+ * add to the message queue our message. */
+#ifndef __linux
     mtx_lock (&Manager.lock);
     memset (&ev, 0, sizeof (ev));
     EV_SET (&ev, NOTE_IDENT, EVFILT_USER, 0, NOTE_TRIGGER, 0, 0);
@@ -56,13 +58,19 @@ void note_send (enum msg_type_e type, svc_id_t id, svc_id_t i_id, void * misc)
         perror ("kevent! (trigger EVFILT_USER)");
     }
     else
+#else
+    write (Manager.npipe[1], 'x', 1);
+#endif
+
         msg_list_add (Manager.msgs, msg);
 }
 
 /* Awakens the main event loop - no message. */
 void note_awake ()
 {
+#ifndef __linux
     struct kevent ev;
+
     mtx_lock (&Manager.lock);
     memset (&ev, 0, sizeof (ev));
     EV_SET (&ev, NOTE_AWAKE, EVFILT_USER, 0, NOTE_TRIGGER, 0, 0);
@@ -72,6 +80,9 @@ void note_awake ()
     {
         perror ("kevent! (trigger EVFILT_USER)");
     }
+#else
+    write (Manager.npipe[1], 'x', 1);
+#endif
 }
 
 int main ()
@@ -108,6 +119,22 @@ int main ()
 
     if (kevent (Manager.kq, &userev, 1, 0, 0, 0) == -1)
         perror_fatal ("kqueue! (userev installation)");
+
+#ifdef __linux
+    pipe (Manager.npipe);
+
+    fcntl (Manager.npipe[0], F_SETFD, FD_CLOEXEC);
+    fcntl (Manager.npipe[1], F_SETFD, FD_CLOEXEC);
+    fcntl (Manager.npipe[0], F_SETFL,
+           fcntl (Manager.npipe[0], F_GETFL, 0) | O_NONBLOCK);
+    fcntl (Manager.npipe[1], F_SETFL,
+           fcntl (Manager.npipe[1], F_GETFL, 0) | O_NONBLOCK);
+
+    EV_SET (&userev, selfpipe[0], EVFILT_READ, EV_ADD, 0, 0, 0);
+
+    if (kevent (Manager.kq, &userev, 1, 0, 0, 0) == -1)
+        perror_fatal ("kqueue! (userev installation)");
+#endif
 
     Manager.ptrack = pt_new (Manager.kq);
     Manager.units = List_new ();
@@ -177,6 +204,16 @@ int main ()
         i = kevent (Manager.kq, NULL, 0, &ev, 1, &tmout);
 
         mtx_lock (&Manager.lock);
+        if (!Manager.clnt_cfg &&
+            unit_find (Manager.units, 1, 1)->state == S_ONLINE)
+        {
+            Manager.clnt_cfg = s16db_context_create ();
+            if (Manager.clnt_cfg)
+            {
+                config_register_port_1 (PORT, Manager.clnt_cfg);
+                config_subscribe_services_1 (PORT, Manager.clnt_cfg);
+            }
+        }
         EV_SET (&userev, NOTE_IDENT, EVFILT_USER, EV_CLEAR, NOTE_FFCOPY, 0, 0);
 
         if (i == -1)
@@ -214,10 +251,19 @@ int main ()
 
         switch (ev.filter)
         {
+#ifndef __linux
         case EVFILT_USER:
         {
             if (ev.ident == NOTE_IDENT)
             {
+#else
+        case EVFILT_READ:
+        {
+            if (ev.ident = Manager.npipe[0])
+            {
+                static char ch;
+                read (Manager.npipe[0], &ch, 1); /* dispose of selfpipe data */
+#endif
                 msg_t * msg;
                 msg = msg_list_lpop (Manager.msgs);
 
