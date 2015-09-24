@@ -33,7 +33,7 @@ int keyprop_is_set (svc_t * svc, const char * name)
 
 svc_t * parse_unit (int is_systemd, char const * path)
 {
-    svc_t * new_svc = s16_svc_new ();
+    svc_t * new_svc = s16_svc_object_new ();
     int inierror = ini_parse (path, parse_config_line, new_svc);
 
     if (inierror > 0)

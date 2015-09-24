@@ -13,7 +13,7 @@
 
 void install_configd_svc ()
 {
-    svc_t * new_svc = s16_svc_new ();
+    svc_t * new_svc = s16_svc_object_new ();
 
     new_svc->id = 1;
     new_svc->name = s16mem_strdup ("s16/configd");
@@ -36,7 +36,7 @@ void install_configd_svc ()
     svc_object_set_property_string (new_svc, "Method.Poststart",
                                     "/bin/echo Execed poststart");
     /* "out/freebsd.amd64/debug/stage/bin/s16.repositoryd");*/
-    s16_inst_new_default (new_svc);
+    s16_inst_object_new_default (new_svc);
     inst_list_lget (new_svc->instances)->id = 1;
 
     unit_list_add (Manager.units,

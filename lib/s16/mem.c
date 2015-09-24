@@ -13,6 +13,9 @@
 #include <string.h>
 #include "s16.h"
 
+#define POOL_SIZE 8 * 1024
+#define MIN_POOL_ALLOC_QUANTAS 16
+
 /* a linked list of memory headers */
 union mem_header_union
 {

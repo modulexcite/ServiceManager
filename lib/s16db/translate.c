@@ -51,7 +51,6 @@ rpc_svc_instance_t svc_instance_to_rpc_svc_instance (svc_instance_t * inst)
 
     newRpc_instance.id = inst->id;
     newRpc_instance.name = strdup (inst->name);
-    newRpc_instance.svc_id = inst->svc_id;
     newRpc_instance.properties.properties_len = List_count (inst->properties);
     newRpc_instance.properties.properties_val =
         property_list_to_rpc_property_array (inst->properties);
@@ -160,7 +159,6 @@ svc_instance_t * rpc_svc_instance_to_svc_instance (rpc_svc_instance_t * rinst)
 
     newInst->id = rinst->id;
     newInst->name = s16mem_strdup (rinst->name);
-    newInst->svc_id = rinst->svc_id;
     newInst->properties = rpc_property_array_to_property_list (
         rinst->properties.properties_val, rinst->properties.properties_len);
 
@@ -171,7 +169,7 @@ svc_t * rpc_svc_to_svc (rpc_svc_t * rsvc)
 {
     RETURN_IF_NULL (rsvc);
     register unsigned i_index;
-    svc_t * newSvc = s16_svc_new ();
+    svc_t * newSvc = s16_svc_object_new ();
 
     newSvc->id = rsvc->id;
     newSvc->name = s16mem_strdup (rsvc->name);

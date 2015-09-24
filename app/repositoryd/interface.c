@@ -74,9 +74,9 @@ svc_id_t * instance_create_1_svc (svc_id_t id, char * name,
         return 0;
 
     if (strcmp (name, "default"))
-        result = s16_inst_new_default (svc);
+        result = s16_inst_object_new_default (svc);
     else
-        result = s16_inst_new (svc, name);
+        result = s16_inst_object_new (svc, name);
 
     return &result;
 }
