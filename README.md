@@ -4,7 +4,7 @@
 
 ##### Development note
 
-** In short: S16 development will be slow for a while. **
+**In short: S16 development will be slow for a while.**
 
 I am sorry to report that S16 development is going to be reduced in pace for
 the next while. 
@@ -20,14 +20,14 @@ not worry. You will surely see something in the coming months.
 
 ### Overview
 
-** A note: please be aware that System XVI is not yet a usable system. **
+**A note: please be aware that System XVI is not yet a usable system.**
 
 System XVI is a modern take on service management.  It aims to incorporate
 useful functionality while maintaining a modular design in the UNIX tradition.
 
 We have an IRC channel; find it at irc://irc.freenode.net/systemxvi
 
-This project is still under heavy development. It is *not yet possible* to boot
+This project is still in an active phase of development. It is *not yet possible* to boot
 with S16; indeed, the init subdirectory is a placeholder.  All effort is
 currently focused on bringing the various components up to a level where they
 are able to act as a service supervisor tool capable of running simple,
