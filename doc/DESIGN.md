@@ -8,11 +8,34 @@ protocol. This stands in contrast to the integrative model that has grown in
 popularity in recent years. This document aims to provide a high-level overview
 of these components and how they interact.
 
-These components have defined interfaces shown in the *RPCGen* interface 
+These components have defined interfaces shown in the *RPCGen* interface
 descriptions (found in **.x** files). It is an explicit goal of S16 to make
 these interfaces simple and thus easily reimplementable. Indeed, this plays an
 important role in the concept of *Restarter Delegates*, which will be explained
 herein.
+
+### Proposed changes
+
+#### Object model
+S16 currently simulates a distributed object model with RPC methods to retrieve
+an object, methods to manipulate an object by its unique identifier, and
+methods to install a modified object in place of its original.
+
+This works, but it does not seem ideal. Either A) a total indirection of all
+object manipulation through libs16db, allowing the creation of a seamless DOM,
+or B) the adoption of an alternative framework for the object model should be
+seriously considered.
+
+The latter option would involve a certain amount of rearchitecting and a set
+of decisions to be made on the role of each component. Would repositoryd reain
+a 'cache', so to speak, or would it become a central repository? I am inclined
+towards the latter. The benefits of this are manifold, and would allow the
+system state to be encapsulated and stored, then recovered from storage.
+This level of power could make many things possible with S16.
+
+Thse benefits in mind, it's also the case that we have adopted already
+repositoryd as a synchronisation mechanism. So it would appear to be prudent to
+bring it to its logical conclusion as the global object manager.
 
 ### Components
 

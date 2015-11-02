@@ -168,7 +168,7 @@ unit_t * unit_new (svc_t * svc, svc_instance_t * inst)
 
     unitnew->pidfile = svc_object_get_property_string (svc, "Unit.PIDFile");
 
-    unitnew->timeout_secs = 12;
+    unitnew->timeout_secs = 7;
 
     fprintf (stderr, "[%s] new unit formed\n", unitnew->name);
 
@@ -412,6 +412,7 @@ void unit_timer_event_readpidfile (void * data, long id)
 
     unit->timer_id_pidfile = 0;
 
+    printf("Timer ReadPidFILE Event\n");
     if (unit->state == S_START)
     {
         if (!(candidate = read_pid_file (unit->pidfile)))
@@ -431,6 +432,7 @@ void unit_timer_event (void * data, long id)
     unit_t * unit = data;
     unit->timer_id = 0;
     timer_del (id);
+    printf("Timer in state %d\n", unit->state);
 
     switch (unit->state)
     {
@@ -460,6 +462,10 @@ void unit_timer_event (void * data, long id)
             unit_purge_and_target (unit);
         }
         return;
+    }
+    case S_START:
+    {
+        fprintf (stderr, "timeout in start\n");
     }
     }
 }
@@ -506,7 +512,7 @@ void unit_ptevent (unit_t * unit, pt_info_t * info)
             case S_POSTSTART:
                 /* we're in poststart, and the main PID of our service has quit.
                  */
-                if (unit->type != T_GROUP || !List_count (unit->pids))
+                if (unit->type != T_GROUP && !List_count (unit->pids))
                 {
                     if (unit->rtype == R_YES)
                         unit->target = S_PRESTART;
@@ -517,7 +523,7 @@ void unit_ptevent (unit_t * unit, pt_info_t * info)
                 }
                 break;
             case S_ONLINE:
-                if (unit->type != T_GROUP || !List_count (unit->pids))
+                if (unit->type != T_GROUP && !List_count (unit->pids))
                 {
                     if (unit->rtype == R_YES)
                         unit->target = S_PRESTART;
@@ -570,7 +576,7 @@ void unit_loop (unit_t * unit)
         break;
     }
 
-    if (unit->type == T_GROUP &&
+    if (unit->type != T_ONESHOT &&
         (unit->state == S_ONLINE || unit->state == S_POSTSTART))
     {
         if (!List_count (unit->pids))
