@@ -2,6 +2,38 @@
 
 ![System XVI Logo](doc/logotype.png)
 
+
+### Discontinuation
+
+Dear System XVI Community,
+
+I have today made the decision to discontinue work on S16.
+
+This decision has been made following a period of inactivity and an obsoletion
+of System XVI's practical raison d'être with Michael Heily's ReLaunchD and other
+efforts in service management.
+
+System XVI technology remains, by a great margin, the most innovative design of a
+service management suite ever publicly shown. Only SystemD and Illumos' SMF come
+close - and both have flaws, particularly SystemD.
+
+I am today convinced that the future of computing lays in the great legacy left
+by Kristen Nygaard and Alan Kay (though we, their heirs, have fucked it up.)
+
+S16's design - in line with the Kayian principles of object-orientation - reified
+the message, and in many respects the components of S16 act somewhat like objects.
+The future for research in a modern service management system must be built atop
+such principles.
+
+I may pursue such research at some point, and it may be under the banner of S16.
+But for now I have other focuses. I invite those who were interested in S16 to
+try to pursue such research. I would welcome anything from a fork of S16 to a
+new service manager incorporating similar principles, and I would likely
+contribute to it.
+
+Ça ira.
+- D.M.
+
 ##### Development note
 
 **In short: S16 development will be slow for a while.**
