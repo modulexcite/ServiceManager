@@ -34,6 +34,9 @@ contribute to it.
 Ça ira.
 - D.M.
 
+
+**(Preserved below is an archive of System XVI's historic README.md.)**
+
 ##### Development note
 
 **In short: S16 development will be slow for a while.**
